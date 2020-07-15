@@ -1,0 +1,54 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from google.colab import drive
+drive.mount('/content/drive/')
+
+data = pd.read_csv('/content/drive/My Drive/Colab Notebooks/MRP/creditcard.csv')
+
+from sklearn.model_selection import train_test_split
+X = data.drop('Class',axis=1).values
+y = data['Class'].values
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=101)
+
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import VotingClassifier
+
+clf1 = LogisticRegression(random_state=1)
+clf2 = DecisionTreeClassifier()
+clf3 = GaussianNB()
+clf4 = MLPClassifier()
+clf5 = SVC(kernel='linear', C=1.0, random_state=1)
+
+clf1.fit(X_train, y_train)
+clf2.fit(X_train, y_train)
+clf3.fit(X_train, y_train)
+clf4.fit(X_train, y_train)
+clf5.fit(X_train, y_train)
+
+eclf = VotingClassifier(
+       estimators=[('lr', clf1), ('dt', clf2), ('gnb', clf3), ('mlp', clf4), ('svc', clf5)], 
+       voting='hard')
+
+scores = cross_val_score(eclf, X_test, y_test, scoring='accuracy', cv = 10)
+
+print("Accuracy: %0.2f" % (scores.mean()))
+
+from sklearn.metrics import classification_report, confusion_matrix
+eclf.fit(X_train, y_train)
+predictions = eclf.predict(X_test)
+print(classification_report(y_test, predictions))
+
+confusion_matrix(y_test,predictions)
